@@ -12,8 +12,8 @@ TeleSQL — это Python-библиотека для управления та
 
 
 ```python
-from teleSQL import TeleSQL
-from teleSQL.types import sqltypes
+from telesql import TeleSQL
+from telesql.types import sqltypes
 
 db = TeleSQL(host='localhost',user='user',password=12345,database='database')
 
