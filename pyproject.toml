@@ -1,0 +1,18 @@
+[project]
+name = "telesql"
+version = "0.1.2"
+description = "Простая обёртка для MySQL в Telebot"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "dap3842"}]
+dependencies = [
+    "mysql-connector-python"
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
