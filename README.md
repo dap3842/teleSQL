@@ -2,12 +2,18 @@
 
 TeleSQL — это Python-библиотека для управления таблицами MySQL через код. TeleSQL настроен на создание вместе с телеграмм ботами. Он позволяет создавать таблицы, а также изменять их.
 
+## Установка
+
+`pip install telesql`
+
+
+
 ## Примеры использования
 
 
 ```python
-from teleSQL import TeleSQL
-from teleSQL.types import sqltypes
+from telesql import TeleSQL
+from telesql.types import sqltypes
 
 db = TeleSQL(host='localhost',user='user',password=12345,database='database')
 
