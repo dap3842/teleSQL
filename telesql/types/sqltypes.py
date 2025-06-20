@@ -27,7 +27,7 @@ class Column():
         return f"<{self.__class__.__name__} pk={self.primary_key}>"
 
     def _sql_string(self, name):
-        parts = [f"{name} {self.type}"]
+        parts = [f"`{name}` {self.type}"]
         if self.primary_key:
             parts.append("PRIMARY KEY")
         if self.auto_increment:

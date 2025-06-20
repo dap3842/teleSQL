@@ -46,9 +46,9 @@ class Table():
         try:
             conn = self.db._get_conn()
             cursor = conn.cursor()
-            colnames = ', '.join(i for i in insert_data)
+            colnames = ', '.join(f"`{col}`" for col in insert_data.keys())
             procenti = ', '.join(['%s']*len(insert_data))
-            query = f"""INSERT INTO {self.name} ({colnames}) VALUES ({procenti})"""
+            query = f"""INSERT INTO `{self.name}` ({colnames}) VALUES ({procenti})"""
             val = tuple(insert_data.values())
             cursor.execute(query,val)
             conn.commit()
@@ -73,7 +73,7 @@ class Table():
         try:
             conn = self.db._get_conn()
             cursor = conn.cursor()
-            query = f"SELECT * FROM {self.name} WHERE id = %s"
+            query = f"SELECT * FROM `{self.name}` WHERE id = %s"
             cursor.execute(query, (id,))
             if cursor.fetchone():
                 return True
@@ -106,7 +106,7 @@ class Table():
         try:
             conn = self.db._get_conn()
             cursor = conn.cursor()
-            query = f"UPDATE {self.name} SET {column} = %s WHERE id = %s"
+            query = f"UPDATE `{self.name}` SET `{column}` = %s WHERE id = %s"
             cursor.execute(query, (value,id))
             conn.commit()
         except Error as e:
@@ -143,7 +143,7 @@ class Table():
             conn = self.db._get_conn()
             cursor = conn.cursor()
             
-            query = f"UPDATE {self.name} SET {column} = {column} + %s WHERE id = %s"
+            query = f"UPDATE `{self.name}` SET `{column}` = `{column}` + %s WHERE id = %s"
             cursor.execute(query, (add_value,id))
             conn.commit()
         except Error as e:
@@ -183,7 +183,7 @@ class Table():
         try:
             conn = self.db._get_conn()
             cursor = conn.cursor()
-            query = f"SELECT {column} FROM {self.name} WHERE id = %s"
+            query = f"SELECT `{column}` FROM `{self.name}` WHERE id = %s"
             cursor.execute(query, (id,))
             result = cursor.fetchone()
             if result:
@@ -237,7 +237,7 @@ class Table():
         try:
             conn = self.db._get_conn()
             cursor = conn.cursor()
-            query = f"DELETE FROM {self.name} WHERE id = %s"
+            query = f"DELETE FROM `{self.name}` WHERE id = %s"
             cursor.execute(query, (id,))
             conn.commit()
         except Error as e:
@@ -262,7 +262,7 @@ class Table():
         try:
             conn = self.db._get_conn()
             cursor = conn.cursor(dictionary=True)
-            query = f"SELECT * FROM {self.name} WHERE id = %s"
+            query = f"SELECT * FROM `{self.name}` WHERE id = %s"
             cursor.execute(query, (id,))
             row = cursor.fetchone()
             if row:
@@ -289,7 +289,7 @@ class Table():
         try:
             conn = self.db._get_conn()
             cursor = conn.cursor(dictionary=True)
-            query = f"SELECT * FROM {self.name}"
+            query = f"SELECT * FROM `{self.name}`"
             cursor.execute(query)
             rows = cursor.fetchall()
             users = []
@@ -320,7 +320,7 @@ class Table():
         try:
             conn = self.db._get_conn()
             cursor = conn.cursor(dictionary=True)
-            query = f"SELECT * FROM {self.name} WHERE {column} < {value}"
+            query = f"SELECT * FROM `{self.name}` WHERE `{column}` < {value}"
             cursor.execute(query)
             rows = cursor.fetchall()
             users = []
@@ -350,7 +350,7 @@ class Table():
         try:
             conn = self.db._get_conn()
             cursor = conn.cursor(dictionary=True)
-            query = f"SELECT * FROM {self.name} WHERE {column} > {value}"
+            query = f"SELECT * FROM `{self.name}` WHERE `{column}` > {value}"
             cursor.execute(query)
             rows = cursor.fetchall()
             users = []
@@ -380,7 +380,7 @@ class Table():
         try:
             conn = self.db._get_conn()
             cursor = conn.cursor(dictionary=True)
-            query = f"SELECT * FROM {self.name} WHERE {column} = {value}"
+            query = f"SELECT * FROM `{self.name}` WHERE `{column}` = {value}"
             cursor.execute(query)
             rows = cursor.fetchall()
             users = []
@@ -396,4 +396,153 @@ class Table():
             if conn:
                 conn.close()
 
+
+    def add_columns(self,columns: dict[str,sqltypes.Column]):
+        """
+        Добавляет столбцы в таблицу.
+
+        :param columns: словарь с именами столбцов и их типами.
+        """
+        conn = None
+        cursor = None
+        try:
+            conn = self.db._get_conn()
+            cursor = conn.cursor()
+            columns_sql_parts = [
+            f"ADD COLUMN {col._sql_string(name)}"
+            for name, col in columns.items()
+            ]
+            alter_sql = f"ALTER TABLE `{self.name}`\n  " + ",\n  ".join(columns_sql_parts) + ";"
+            cursor.execute(alter_sql)
+            conn.commit()
+            self.columns = {**self.columns,**columns}
+        except Error as e:
+            print(f'Произошла MySQL ошибка: {e}')
+            raise MySQLerr(e)
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+
+    def drop_columns(self,columns: list[str]):
+        """
+        Удаляет столбцы из таблицы.
+
+        :param columns: список имен столбцов.
+
+        """
+        conn = None
+        cursor = None
+        try:
+            conn = self.db._get_conn()
+            cursor = conn.cursor()
+            for i in columns:
+                cursor.execute(f"ALTER TABLE `{self.name}` DROP COLUMN `{i}`;")
+            conn.commit()
+            for col in columns:
+                self.columns.pop(col, None)
+        except Error as e:
+            print(f'Произошла MySQL ошибка: {e}')
+            raise MySQLerr(e)
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
     
+    def copy_table_structure(self,new_table_name):
+        """
+        Копирует структуру таблицы.
+
+        :param new_table_name: имя новой таблицы.
+        """
+        conn = None
+        cursor = None
+        try:
+            conn = self.db._get_conn()
+            cursor = conn.cursor()
+            cursor.execute(f"CREATE TABLE `{new_table_name}` LIKE `{self.name}`")
+            conn.commit()
+            return Table(new_table_name,self.db,self.columns)
+        except Error as e:
+            print(f'Произошла MySQL ошибка: {e}')
+            raise MySQLerr(e)
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+
+    def copy_table_all(self,new_table_name):
+        """
+        Копирует все данные из таблицы.
+
+        :param new_table_name: имя новой таблицы.
+        """
+        conn = None
+        cursor = None
+        try:
+            conn = self.db._get_conn()
+            cursor = conn.cursor()
+            cursor.execute(f'CREATE TABLE `{new_table_name}` LIKE `{self.name}`;')
+            cursor.execute(f'INSERT INTO `{new_table_name}` SELECT * FROM `{self.name}`;')
+            conn.commit()
+            return Table(new_table_name,self.db,self.columns)
+        except Error as e:
+            print(f'Произошла MySQL ошибка: {e}')
+            raise MySQLerr(e)
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+    def drop_table(self):
+        """
+        Удаляет таблицу.
+        """
+        conn = None
+        cursor = None
+        try:
+            conn = self.db._get_conn()
+            cursor = conn.cursor()
+            cursor.execute(f'DROP TABLE IF EXISTS `{self.name}`;')
+            conn.commit()
+            return None
+        except Error as e:
+            print(f'Произошла MySQL ошибка: {e}')
+            raise MySQLerr(e)
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+    def rename_table(self,new_name):
+        """
+        Переименовывает таблицу.
+
+        :param new_name: новое имя таблицы.
+        """
+        conn = None
+        cursor = None
+        try:
+            conn = self.db._get_conn()
+            cursor = conn.cursor()
+            cursor.execute(f'RENAME TABLE `{self.name}` TO `{new_name}`;')
+            conn.commit()
+            self.name = new_name
+        except Error as e:
+            print(f'Произошла MySQL ошибка: {e}')
+            raise MySQLerr(e)
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+                
+
