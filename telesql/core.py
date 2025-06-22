@@ -137,12 +137,14 @@ class TeleSQL:
         elif raw.startswith("bool") or raw.startswith("tinyint(1)"):
             return sqltypes.BOOLEAN(primary_key=primary_key, auto_increment=auto_increment,
                                 nullable=nullable, default=default, unique=unique)
-        elif raw.startswith("date"):
-            return sqltypes.DATE(primary_key=primary_key, auto_increment=auto_increment,
-                                    nullable=nullable, default=default, unique=unique)
         elif raw.startswith("datetime") or raw.startswith("timestamp"):
-            return sqltypes.DATETIME(primary_key=primary_key, auto_increment=auto_increment,
+            return sqltypes.DATETIME(primary_key=primary_key,
                                     nullable=nullable, default=default, unique=unique)
+        
+        elif raw.startswith("date"):
+            return sqltypes.DATE(primary_key=primary_key,
+                                    nullable=nullable, default=default, unique=unique)
+        
         else:
             return sqltypes.Column(type_=raw_type, primary_key=primary_key, auto_increment=auto_increment,
                           nullable=nullable, default=default, unique=unique)
