@@ -108,7 +108,7 @@ class TeleSQL:
                                 nullable=nullable, default=default, unique=unique)
         
         elif raw.startswith("text"):
-            return sqltypes.TEXT(primary_key=primary_key, auto_increment=auto_increment,
+            return sqltypes.TEXT(primary_key=primary_key,
                                 nullable=nullable, default=default, unique=unique)
 
         elif raw.startswith("varchar") or raw.startswith("char"):
@@ -116,10 +116,10 @@ class TeleSQL:
             length = int(match.group(1)) if match else None
 
             if raw.startswith("varchar"):
-                return sqltypes.VARCHAR(length=length, primary_key=primary_key, auto_increment=auto_increment,
+                return sqltypes.VARCHAR(length=length, primary_key=primary_key,
                                     nullable=nullable, default=default, unique=unique)
             else:
-                return sqltypes.CHAR(length=length, primary_key=primary_key, auto_increment=auto_increment,
+                return sqltypes.CHAR(length=length, primary_key=primary_key,
                                     nullable=nullable, default=default, unique=unique)
         elif raw.startswith("decimal"):
             m = re.match(r"decimal\((\d+),(\d+)\)", raw)
@@ -135,7 +135,7 @@ class TeleSQL:
             return sqltypes.FLOAT(primary_key=primary_key, auto_increment=auto_increment,
                                 nullable=nullable, default=default, unique=unique)
         elif raw.startswith("bool") or raw.startswith("tinyint(1)"):
-            return sqltypes.BOOLEAN(primary_key=primary_key, auto_increment=auto_increment,
+            return sqltypes.BOOLEAN(primary_key=primary_key,
                                 nullable=nullable, default=default, unique=unique)
         elif raw.startswith("datetime") or raw.startswith("timestamp"):
             return sqltypes.DATETIME(primary_key=primary_key,
