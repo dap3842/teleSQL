@@ -203,13 +203,12 @@ class Table():
 
     def _can_update_column(self, val, column: str) -> bool:
         col_type = self.columns[column].type.upper()
-
         try:
             if col_type in ["INT", "BIGINT", "SMALLINT"]:
                 int(val)
-            elif col_type in ["FLOAT", "DOUBLE", "DECIMAL"]:
+            elif col_type.split("(")[0] in ["FLOAT", "DOUBLE", "DECIMAL"] or col_type in ["FLOAT", "DOUBLE", "DECIMAL"]:
                 float(val)
-            elif col_type in ["TEXT", "VARCHAR", "CHAR"]:
+            elif col_type.split("(")[0] in ["TEXT", "VARCHAR", "CHAR"]:
                 str(val)
             elif col_type in ["BOOLEAN", "BOOL", "TINYINT(1)"]:
                 if isinstance(val, bool) or val in [0, 1, '0', '1', 'true', 'false', 'True', 'False']:
@@ -380,8 +379,8 @@ class Table():
         try:
             conn = self.db._get_conn()
             cursor = conn.cursor(dictionary=True)
-            query = f"SELECT * FROM `{self.name}` WHERE `{column}` = {value}"
-            cursor.execute(query)
+            query = f"SELECT * FROM `{self.name}` WHERE `{column}` = %s"
+            cursor.execute(query,(value,))
             rows = cursor.fetchall()
             users = []
             for row in rows:
